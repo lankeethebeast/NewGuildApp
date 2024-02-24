@@ -1,0 +1,92 @@
+.nav {
+    position: absolute;
+    right: 0px;
+    width: 300px;
+    padding: 10px;
+}
+
+.form-control {
+    max-width: 300px;
+}
+
+.small-image {
+        max-width: 50px;
+        max-height: 50px;
+    }
+
+.right-align {
+    float: right;
+}
+
+
+.flash-message {
+    margin: auto;
+    width: 50%;
+    text-align: center;
+    position: absolute;
+    left: 0;
+    right: 0;
+}
+
+.a_users_table {
+    margin: auto;
+    width: 75%;
+    text-align: center;
+}
+
+.mclinks_selection {
+    margin: auto;
+    width: 75%;
+    text-align: center;
+}
+
+.mclinks_table {
+    margin: auto;
+    max-width: 75%;
+    text-align: center;
+}
+
+.a_mclinks_table {
+    margin: auto;
+    width: 75%;
+    text-align: center;
+}
+
+
+
+.user_table {
+    margin: auto;
+    width: 75%;
+    text-align: center;
+}
+
+.login_form {
+    margin: auto;
+    width: 50%;
+    text-align: center;
+    position: relative;
+    left: 0;
+    right: 0;
+    padding-top: 100px;
+}
+
+.login_form form {
+    display: inline-block;
+    text-align: left;
+}
+
+.register_form {
+    margin: auto;
+    width: 50%;
+    text-align: center;
+    position: relative;
+    left: 0;
+    right: 0;
+    padding-top: 100px;
+}
+
+.register_form form {
+    display: inline-block;
+    text-align: left;
+}
+
