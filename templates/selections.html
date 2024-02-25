@@ -79,13 +79,12 @@
 {% endblock %}
 
 {% block content %}
-
 {% if g.selection_toggle == 0 %}
 <br>
 <h1 class="mclinks_selection">MASTERY LINK SELECTIONS ARE CLOSED</h1>
 {% else %}
 <div class="mclinks_selection">
-        {% if g.sel_lock == 0 %}
+    {% if g.sel_lock == 0 %}
     <h1>Mastery Chain Link Selection Open</h1>
     <h2>Select Your Links!</h2>
     <br>
@@ -98,33 +97,31 @@
             </tr>
         </thead>
         <tbody>
-
             <tr>
                 <form action="/add_selection" method="POST">
                     <td>
                         <select name="name">
-                    {% for name in unique_names %}
-                        <option>{{ name[0] }}</option>
-                    {% endfor %}
+                            {% for name in unique_names %}
+                            <option>{{ name[0] }}</option>
+                            {% endfor %}
                         </select>
+                    </td>
                     <td>
                         <select class="form-control" name="quality" id="quality">
-                        <option>Bronze</option>
-                        <option>Silver</option>
-                        <option>Gold</option>
+                            <option>Bronze</option>
+                            <option>Silver</option>
+                            <option>Gold</option>
                         </select>
                     </td>
                     <td><input type="number" name="quantity"></td>
                     <td><button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure?')">Submit</button></td>
-                    {% endif %}
                 </form>
             </tr>
-
         </tbody>
     </table>
 </div>
 
-<div action="" class="mclinks_table">
+<div class="mclinks_table">
     <h1>Selected Mastery Chain Links</h1>
     <br>
     <table class="table table-striped-columns table-hover">
@@ -138,40 +135,82 @@
             </tr>
         </thead>
         <tbody>
-            {% for selection in selections_data %}
-        <tr>
-                <td>{{ selection['name'] }}</td>
-                <td>{{ selection['quality'] }}</td>
-                <td>{{ selection['s_quantity'] }}</td>
-                <td>{{ selection['guild_price'] }}</td>
-                <td>{{ selection['links_total'] }}</td>
-            {% if g.sel_lock == 0 %}
-    <form method="post">
-                <input type="hidden" name="selection_id" value="{{ selection['id'] }}">
-                <input type="hidden" name="mclink_id" value="{{ selection['mclink_id'] }}">
-                <td><button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure?')">Update</button></td>
-    </form>
-    <form action="/delete_user_selection" method="post">
+            <form action="/update_user_selection" method="post">
+    {% for selection in selections_data %}
+    <tr>
+        <td>
+            {{ selection['name'] }}
+        </td>
+        <td>
+            <select class="form-control" name="quality" id="quality">
+                <option {% if selection['quality'] == 'Bronze' %} selected {% endif %}>Bronze</option>
+                <option {% if selection['quality'] == 'Silver' %} selected {% endif %}>Silver</option>
+                <option {% if selection['quality'] == 'Gold' %} selected {% endif %}>Gold</option>
+            </select>
+        </td>
+        <td><input type="number" name="quantity" value="{{ selection['s_quantity'] }}"></td>
+        <td>{{ selection['guild_price'] }}</td>
+        <td>{{ selection['links_total'] }}</td>
+        <input type="hidden" name="link_name" value="{{ selection['name'] }}">
         <input type="hidden" name="selection_id" value="{{ selection['id'] }}">
-        <td><button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete?')">Delete</button></td>
-    </form>
-    {% endif %}
-    {% endfor %}
-        </tr>
+        <input type="hidden" name="mclink_id" value="{{ selection['mclink_id'] }}">
+        <td><button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure?')">Update</button></td>
+        </form>
+        <form action="/delete_user_selection" method="post">
+               <input type="hidden" name="selection_id" value="{{ selection['id'] }}">
+        <input type="hidden" name="mclink_id" value="{{ selection['mclink_id'] }}">
+        <td><button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button></td>
+        </form>
+    </tr>
+
+                {% endfor %}
+
+
+
+
         </tbody>
     </table>
-
     <p><input type="hidden" name="total"><b>Total Cost:</b> {{ total_links_total }}</p>
-    {% if g.sel_lock == 0 %}
     <br>
     <form action="/reset_user_selections" method="POST">
         <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure? This will wipe all your selections')">Reset Your Selections</button>
     </form>
-    {% endif %}
-    <br>
-    <form action="/user_selection_toggle" method="POST">
-        <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure? You can toggle this on/off')">Lock Selections Toggle</button>
-    </form>
 </div>
+{% else %}
+<div class="mclinks_table">
+    <h1>Selected Mastery Chain Links</h1>
+    <br>
+    <table class="table table-striped-columns table-hover">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Quality</th>
+                <th>Quantity</th>
+                <th>Guild Price</th>
+                <th>Links Total Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            <form action="/update_user_selection" method="post">
+                {% for selection in selections_data %}
+                <tr>
+                    <td>{{ selection['name'] }}</td>
+                    <td>{{ selection['quality'] }}</td>
+                    <td>{{ selection['quantity'] }}</td>
+                    <td>{{ selection['guild_price'] }}</td>
+                    <td>{{ selection['links_total'] }}</td>
+                </tr>
+                {% endfor %}
+            </form>
+        </tbody>
+    </table>
+    <p><input type="hidden" name="total"><b>Total Cost:</b> {{ total_links_total }}</p>
+    </div>
 {% endif %}
+{% endif %}
+<br>
+<form class="user_lock_sel"action="/user_selection_toggle" method="POST">
+    <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure? You can toggle this on/off')">Lock Selections Toggle</button>
+</form>
+
 {% endblock %}

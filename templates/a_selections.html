@@ -87,7 +87,13 @@
 <br>
 <div class="a_mclinks_table">
     <form action="/reset_all_selections" method="post">
-        <button type="submit" onclick="return confirm('Are you sure?')">Reset All Users Selections</button> <b>{{ reset }}</b>
+        <button type="submit" onclick="return confirm('Are you sure?')">Reset All Users Selections</button>
+    </form>
+</div>
+<br>
+<div class="a_mclinks_table">
+    <form action="/assign_links" method="post">
+        <button type="submit" onclick="return confirm('Are you sure?')">Assign Links</button>
     </form>
 </div>
 <br>
@@ -108,6 +114,7 @@
             <thead>
 
                 <tr>
+                    <th>ID</th>
                     <th>Name</th>
                     <th>Quality</th>
                     <th>Quantity</th>
@@ -119,13 +126,14 @@
                 {% for selection in selection_data %}
                     {% if selection['user_id'] == user_info['id'] %}
                         <tr>
-                            <td>{{ selection['name'] }}</td>
+                            <td><input type="hidden" name="selection_id" value="{{ selection['id'] }}">{{ selection['id'] }}</td>
+                            <td><input type="hidden" name="name" value="{{ selection['name'] }}">{{ selection['name'] }}</td>
                             <td>{{ selection['quality'] }}</td>
                             <td>{{ selection['s_quantity'] }}</td>
                             <td>{{ selection['guild_price'] }}</td>
-                        </tr>
                     {% endif %}
                 {% endfor %}
+
             </tbody>
         </table>
         <p><input type="hidden" name="total"><b>Total Cost:</b> {{ total_cost }}</p>

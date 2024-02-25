@@ -128,20 +128,48 @@ def reset_all_selections():
 ###
 
 # Function for the user to update an individual link selection
-# @app.route('/update_user_selection', methods=['POST'])
-# def update_user_selection():
-#     if request.method == 'POST':
-#         conn, cursor = connect_to_database('uonew.db')
-#         user_data = get_user_data()
-#         user_id = user_data['id']
-#         cursor.execute("UPDATE XXX FROM selections WHERE user_id =?", (user_id,))
-#
-#         conn.commit()
-#         conn.close()
-#         flash('All your selections have been reset')
-#         status = check_user_selection()
-#         print(status)
-#         return redirect(url_for('selections'))
+@app.route('/update_user_selection', methods=['POST'])
+def update_user_selection():
+    if request.method == 'POST':
+        sel_id = request.form['selection_id']
+        quality = request.form['quality']
+        quantity = request.form['quantity']
+        mclink_id = request.form['mclink_id']
+        sel_name = request.form['link_name']
+
+        if not (quality and quantity):
+            flash('All fields are required', 'error')
+            return redirect(url_for('selections'))
+
+        conn, cursor = connect_to_database('uonew.db')
+
+        # Check if quality has been changed
+        cursor.execute("SELECT quality FROM mclinks WHERE id = ?", (mclink_id,))
+        old_quality = cursor.fetchone()[0]
+
+        if old_quality != quality:
+            # Quality has been changed, update mclink_id
+            cursor.execute("SELECT id, quantity FROM mclinks WHERE name = ? AND quality = ?", (sel_name, quality,))
+            mclinks = cursor.fetchone()
+            if int(quantity) > int(mclinks['quantity']):
+                flash('Not enough of that link available', 'error')
+                return redirect(url_for('selections'))
+            cursor.execute("UPDATE selections SET s_quantity = ?, mclink_id = ? WHERE id = ?", (quantity, mclink_id, sel_id,))
+        else:
+            # Quality has not been changed, only update s_quantity
+            cursor.execute("SELECT id, quantity FROM mclinks WHERE name = ? AND quality = ?", (sel_name, quality,))
+            mclinks = cursor.fetchone()
+            if int(quantity) > int(mclinks['quantity']):
+                flash('Not enough of that link available', 'error')
+                return redirect(url_for('selections'))
+            cursor.execute("UPDATE selections SET s_quantity = ? WHERE id = ?", (quantity, sel_id,))
+
+        conn.commit()
+        conn.close()
+        flash('Your selection has been updated')
+        return redirect(url_for('selections'))
+
+
 
 # Function for the user to delete an individual link selection
 @app.route('/delete_user_selection', methods=['POST'])
@@ -151,7 +179,7 @@ def delete_user_selection():
         user_data = get_user_data()
         user_id = user_data['id']
         selection_id = request.form['selection_id']
-        cursor.execute("DELETE FROM selections WHERE user_id =? AND id =?", (user_id,selection_id))
+        cursor.execute("DELETE FROM selections WHERE user_id =? AND id =?", (user_id, selection_id))
         conn.commit()
         conn.close()
         flash('Your selection has been removed')
@@ -433,6 +461,7 @@ def add_selection():
         name = request.form['name']
         quality = request.form['quality']
         quantity = int(request.form['quantity'])
+
         if not (name and quality and quantity):
             flash('All fields are required', 'error')
             return redirect(url_for('selections'))
@@ -441,23 +470,21 @@ def add_selection():
 
         cursor.execute("SELECT id, quantity, guild_price FROM mclinks WHERE name=? AND quality=?", (name, quality))
         mclink_data = cursor.fetchone()
+
         if not mclink_data:
             flash('No matching link found', 'error')
             return redirect(url_for('selections'))
 
-        mclink_id, available_quantity, guild_price = mclink_data
-
-
-        if quantity > available_quantity:
+        if quantity > mclink_data['quantity']:
             flash('Not enough quantity available', 'error')
             return redirect(url_for('selections'))
 
-        links_total = quantity * guild_price
+        links_total = quantity * mclink_data['guild_price']
 
         user_data = get_user_data()
         user_id = user_data['id']
 
-        cursor.execute("INSERT INTO selections (mclink_id, s_quantity, user_id, links_total) VALUES (?, ?, ?, ?)", (mclink_id, quantity, user_id, links_total))
+        cursor.execute("INSERT INTO selections (mclink_id, s_quantity, user_id, links_total) VALUES (?, ?, ?, ?)", (mclink_data['id'], quantity, user_id, links_total))
 
         conn.commit()
         conn.close()
@@ -484,6 +511,8 @@ def a_selections():
         "SELECT DISTINCT selections.user_id, users.id, users.display_name, users.sel_lock FROM selections INNER JOIN users ON selections.user_id = users.id;")
     unique_names = cursor.fetchall()
 
+
+
     # Fetch total sum of links for each user
     totals = {}
     for names in unique_names:
@@ -492,11 +521,15 @@ def a_selections():
         total_price = cursor.fetchone()[0]
         totals[user_id] = total_price
 
+    # Get unique links in database
+    cursor.execute("SELECT DISTINCT name FROM mclinks;")
+    unique_links = cursor.fetchall()
+
     conn.commit()
     conn.close()
 
     return render_template('a_selections.html', s_toggle=s_toggle, selection_data=selection_data,
-                           unique_names=unique_names, totals=totals)
+                           unique_names=unique_names, totals=totals, unique_links=unique_links)
 
 
 @app.route('/mclinks_delivery')
