@@ -652,9 +652,8 @@ def mclinks_delivery():
     conn.commit()
     conn.close()
 
-    return render_template('a_selections.html', delivery_data=delivery_data,
+    return render_template('mclinks_delivery.html', delivery_data=delivery_data,
                            unique_names=unique_names, totals=totals, unique_links=unique_links)
-    return render_template('mclinks_delivery.html')
 
 # Route for Admin - User Management
 @app.route('/a_users')
