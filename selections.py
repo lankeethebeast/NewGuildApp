@@ -6,31 +6,13 @@ from users import select_all_users, get_user_data, login_check_existing_user, re
 # Matery Chain Link Selection Functions
 ###
 
-# Function to get link info
-def select_links():
+def select_selections(user_id=None):
     conn, cursor = connect_to_database('uonew.db')
-    cursor.execute("SELECT * FROM mclinks")
-    links_data = cursor.fetchall()
-    conn.close()
-    return links_data
-
-def select_selections():
-    conn, cursor = connect_to_database('uonew.db')
-    user_data = get_user_data()
-
-    user_id = user_data['id']
-
-    cursor.execute("SELECT * FROM selections INNER JOIN mclinks ON selections.mclink_id = mclinks.id WHERE selections.user_id = ?", (user_id,))
+    if user_id:
+        cursor.execute("SELECT * FROM selections INNER JOIN mclinks ON selections.mclink_id = mclinks.id WHERE selections.user_id = ?", (user_id,))
+    else:
+        cursor.execute("SELECT * FROM selections INNER JOIN mclinks ON selections.mclink_id = mclinks.id")
     selections_data = cursor.fetchall()
-
-    conn.close()
-    return selections_data
-
-def admin_select_selections():
-    conn, cursor = connect_to_database('uonew.db')
-    cursor.execute("SELECT * FROM selections INNER JOIN mclinks ON selections.mclink_id = mclinks.id")
-    selections_data = cursor.fetchall()
-
     conn.close()
     return selections_data
 

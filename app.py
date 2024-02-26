@@ -2,7 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.security import generate_password_hash
 from helpers import connect_to_database
 from users import select_all_users, get_user_data, login_check_existing_user, register_check_existing_user
-from selections import select_links, check_selection_toggle, select_selections, admin_select_selections
+from selections import check_selection_toggle, select_selections
+from mclinks import select_links
 import sqlite3
 import re
 
@@ -136,7 +137,9 @@ def update_user_selection():
         quantity = request.form['quantity']
         mclink_id = request.form['mclink_id']
         sel_name = request.form['link_name']
-
+        if quantity == '0':
+            flash('Just Delete it!!', 'error')
+            return redirect(url_for('selections'))
         if not (quality and quantity):
             flash('All fields are required', 'error')
             return redirect(url_for('selections'))
@@ -182,7 +185,7 @@ def delete_user_selection():
         cursor.execute("DELETE FROM selections WHERE user_id =? AND id =?", (user_id, selection_id))
         conn.commit()
         conn.close()
-        flash('Your selection has been removed')
+        flash('Your selection has been removed', 'success')
         return redirect(url_for('selections'))
 
 # Function for the user to delete an individual link selection
@@ -439,19 +442,24 @@ def a_mclinks():
 # Route for User - Mastery Chain Link Selections
 @app.route('/selections', methods=['GET', 'POST'])
 def selections():
+    # Get User ID
     user_data = get_user_data()
     user_id = user_data['id']
+
+    # Initiate DB Connection
     conn, cursor = connect_to_database('uonew.db')
+
     # Get unique names in database for dropdown menu
     cursor.execute("SELECT DISTINCT name FROM mclinks;")
     unique_names = cursor.fetchall()
-    # Get total cost of amount of links chosen
+
+    # Get total cost of all links chosen by user
     cursor.execute("SELECT SUM(links_total) FROM selections WHERE user_id=?", (user_id,))
     total_links_total = cursor.fetchone()[0]
-
     conn.close()
 
-    selections_data = select_selections()
+    # Get all selected links of user (including mclinks data)
+    selections_data = select_selections(user_id)
 
     return render_template('selections.html', unique_names=unique_names, selections_data=selections_data, total_links_total=total_links_total)
 
@@ -462,13 +470,23 @@ def add_selection():
         quality = request.form['quality']
         quantity = int(request.form['quantity'])
 
+        if quantity == '0':
+            flash('Just Delete it!!', 'error')
+            return redirect(url_for('selections'))
+
+        # Get User ID
+        user_data = get_user_data()
+        user_id = user_data['id']
+
+        # Ensure all fields are used
         if not (name and quality and quantity):
             flash('All fields are required', 'error')
             return redirect(url_for('selections'))
 
+        # Initiate DB Connection
         conn, cursor = connect_to_database('uonew.db')
 
-        cursor.execute("SELECT id, quantity, guild_price FROM mclinks WHERE name=? AND quality=?", (name, quality))
+        cursor.execute("SELECT * FROM mclinks WHERE name=? AND quality=?", (name, quality))
         mclink_data = cursor.fetchone()
 
         if not mclink_data:
@@ -479,18 +497,29 @@ def add_selection():
             flash('Not enough quantity available', 'error')
             return redirect(url_for('selections'))
 
-        links_total = quantity * mclink_data['guild_price']
+        # Check if selection exists
+        cursor.execute("SELECT * FROM selections WHERE mclink_id=? AND user_id=?", (mclink_data['id'], user_id))
+        existing_selection = cursor.fetchone()
 
-        user_data = get_user_data()
-        user_id = user_data['id']
-
-        cursor.execute("INSERT INTO selections (mclink_id, s_quantity, user_id, links_total) VALUES (?, ?, ?, ?)", (mclink_data['id'], quantity, user_id, links_total))
+        if existing_selection:
+            # If selection exists, update selection
+            new_quantity = existing_selection['s_quantity'] + quantity
+            if new_quantity > mclink_data['quantity']:
+                flash('Not enough quantity available', 'error')
+                return redirect(url_for('selections'))
+            else:
+                cursor.execute("UPDATE selections SET s_quantity=? WHERE id=?", (new_quantity, existing_selection['id']))
+        else:
+            # If selection doesn't exist, add new selection
+            links_total = quantity * mclink_data['guild_price']
+            cursor.execute("INSERT INTO selections (mclink_id, s_quantity, user_id, links_total) VALUES (?, ?, ?, ?)", (mclink_data['id'], quantity, user_id, links_total))
 
         conn.commit()
         conn.close()
 
         flash('Selection added successfully', 'success')
         return redirect(url_for('selections'))
+
 
 # Route for Admin - Mastery Chain Link Selections
 @app.route('/a_selections', methods=['POST', 'GET'])
@@ -502,7 +531,7 @@ def a_selections():
         # If selection feature is not enabled
         s_toggle = 'OFF'
 
-    selection_data = admin_select_selections()
+    selection_data = select_selections()
 
     conn, cursor = connect_to_database('uonew.db')
 
