@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.security import generate_password_hash
 from helpers import connect_to_database
 from users import select_all_users, get_user_data, login_check_existing_user, register_check_existing_user
-from selections import check_selection_toggle, select_selections
+from selections import check_selection_toggle, select_selections, select_delivery
 from mclinks import select_links
 import sqlite3
 import re
@@ -628,6 +628,32 @@ def a_selections():
 
 @app.route('/mclinks_delivery')
 def mclinks_delivery():
+    delivery_data = select_delivery()
+
+    conn, cursor = connect_to_database('uonew.db')
+
+    # Get unique names in database
+    cursor.execute(
+        "SELECT DISTINCT link_delivery.user_id, users.id, users.display_name FROM link_delivery INNER JOIN users ON link_delivery.user_id = users.id;")
+    unique_names = cursor.fetchall()
+
+    # Fetch total sum of links for each user
+    totals = {}
+    for names in unique_names:
+        user_id = names['id']
+        cursor.execute("SELECT SUM(links_total) FROM link_delivery WHERE user_id=?", (user_id,))
+        total_price = cursor.fetchone()[0]
+        totals[user_id] = total_price
+
+    # Get unique links in database
+    cursor.execute("SELECT DISTINCT name FROM mclinks;")
+    unique_links = cursor.fetchall()
+
+    conn.commit()
+    conn.close()
+
+    return render_template('a_selections.html', delivery_data=delivery_data,
+                           unique_names=unique_names, totals=totals, unique_links=unique_links)
     return render_template('mclinks_delivery.html')
 
 # Route for Admin - User Management
@@ -699,7 +725,37 @@ def user_update_pass():
             conn.close()
             flash('Password Updated Successful', 'success')
 
-    return redirect(url_for('user'))
+@app.route('/assign_links')
+def assign_links():
+    selection_data = select_selections()
+
+    conn, cursor = connect_to_database('uonew.db')
+
+    for row in selection_data:
+        mclink_id = row['mclink_id']
+        s_quantity = row['s_quantity']
+        user_id = row['user_id']
+        links_total = row['links_total']
+
+        cursor.execute("INSERT INTO link_delivery (mclink_id, s_quantity, user_id, links_total) VALUES (?, ?, ?, ?)", (mclink_id, s_quantity, user_id, links_total))
+        conn.commit()
+
+    conn.close()
+    flash('Links Delivered', 'success')
+    return redirect(url_for('a_selections'))
+
+# Reset link selections for ALL users
+@app.route('/reset_delivery')
+def reset_delivery():
+    conn, cursor = connect_to_database('uonew.db')
+    cursor.execute("DELETE FROM link_delivery")
+    conn.commit()
+    conn.close()
+    flash('Assignment has been reset')
+    return redirect(url_for('a_selections'))
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

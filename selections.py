@@ -23,3 +23,12 @@ def check_selection_toggle():
     conn.close()
     return selection_toggle
 
+def select_delivery(user_id=None):
+    conn, cursor = connect_to_database('uonew.db')
+    if user_id:
+        cursor.execute("SELECT * FROM link_delivery INNER JOIN mclinks ON link_delivery.mclink_id = mclinks.id WHERE link_delivery.user_id = ?", (user_id,))
+    else:
+        cursor.execute("SELECT * FROM link_delivery INNER JOIN mclinks ON link_delivery.mclink_id = mclinks.id")
+    delivery_data = cursor.fetchall()
+    conn.close()
+    return delivery_data

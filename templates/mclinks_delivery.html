@@ -79,32 +79,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="a_mclinks_selected">
-        <h1>Links to Deliver</h1>
-        <br>
-        <h1>Mastery Chain Links to Deliver for </h1>
-        <br>
-        <form method="post">
-            <table class="table table-striped-columns table-hover">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Quality</th>
-                        <th>Quantity</th>
-                        <th>Guild Price</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><input type="hidden" name="name"></td>
-                        <td><input type="hidden" name="quality"></td>
-                        <td><input type="hidden" name="quantity"></td>
-                        <td><input type="hidden" name="guild_price"></td>
-                    </tr>
-                </tbody>
-            </table>
-            <p><input type="hidden" name="total"><b>Total Cost:</b> {{ total }}</p>
-            <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure?')">Delivered</button>
-        </form>
-    </div>
+<div class="a_mclinks_table">
+    <h1>Links to Deliver</h1>
+
+</div>
 {% endblock %}
