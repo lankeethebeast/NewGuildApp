@@ -151,13 +151,17 @@ def update_user_selection():
         old_quality = cursor.fetchone()[0]
 
         if old_quality != quality:
-            # Quality has been changed, update mclink_id
+            # Quality has been changed, update mclink_id and quanity
             cursor.execute("SELECT id, quantity FROM mclinks WHERE name = ? AND quality = ?", (sel_name, quality,))
             mclinks = cursor.fetchone()
             if int(quantity) > int(mclinks['quantity']):
                 flash('Not enough of that link available', 'error')
                 return redirect(url_for('selections'))
-            cursor.execute("UPDATE selections SET s_quantity = ?, mclink_id = ? WHERE id = ?", (quantity, mclink_id, sel_id,))
+            cursor.execute("UPDATE selections SET s_quantity = ?, mclink_id = ? WHERE id = ?", (quantity, mclinks['id'], sel_id,))
+            conn.commit()
+            conn.close()
+            flash('Your selection has been updated')
+            return redirect(url_for('selections'))
         else:
             # Quality has not been changed, only update s_quantity
             cursor.execute("SELECT id, quantity FROM mclinks WHERE name = ? AND quality = ?", (sel_name, quality,))
@@ -166,11 +170,10 @@ def update_user_selection():
                 flash('Not enough of that link available', 'error')
                 return redirect(url_for('selections'))
             cursor.execute("UPDATE selections SET s_quantity = ? WHERE id = ?", (quantity, sel_id,))
-
-        conn.commit()
-        conn.close()
-        flash('Your selection has been updated')
-        return redirect(url_for('selections'))
+            conn.commit()
+            conn.close()
+            flash('Your selection has been updated')
+            return redirect(url_for('selections'))
 
 @app.route('/admin_update_user_selection', methods=['POST'])
 def admin_update_user_selection():
@@ -189,7 +192,7 @@ def admin_update_user_selection():
 
         conn, cursor = connect_to_database('uonew.db')
 
-        # Check if quality has been changed
+        # Get quality of selection before being updated
         cursor.execute("SELECT quality FROM mclinks WHERE id = ?", (mclink_id,))
         old_quality = cursor.fetchone()[0]
 
@@ -200,7 +203,11 @@ def admin_update_user_selection():
             if int(quantity) > int(mclinks['quantity']):
                 flash('Not enough of that link available', 'error')
                 return redirect(url_for('a_selections'))
-            cursor.execute("UPDATE selections SET s_quantity = ?, mclink_id = ? WHERE id = ?", (quantity, mclink_id, sel_id,))
+            cursor.execute("UPDATE selections SET s_quantity = ?, mclink_id = ? WHERE id = ?", (quantity, mclinks['id'], sel_id,))
+            conn.commit()
+            conn.close()
+            flash('Your selection has been updated')
+            return redirect(url_for('a_selections'))
         else:
             # Quality has not been changed, only update s_quantity
             cursor.execute("SELECT id, quantity FROM mclinks WHERE name = ? AND quality = ?", (sel_name, quality,))
@@ -209,11 +216,11 @@ def admin_update_user_selection():
                 flash('Not enough of that link available', 'error')
                 return redirect(url_for('a_selections'))
             cursor.execute("UPDATE selections SET s_quantity = ? WHERE id = ?", (quantity, sel_id,))
+            conn.commit()
+            conn.close()
+            flash('Your selection has been updated')
+            return redirect(url_for('a_selections'))
 
-        conn.commit()
-        conn.close()
-        flash('Your selection has been updated')
-        return redirect(url_for('a_selections'))
 
 # Function for the user to delete an individual link selection
 @app.route('/delete_user_selection', methods=['POST'])
@@ -479,6 +486,11 @@ def index():
 @app.route('/ma')
 def ma():
     return render_template('ma.html')
+
+# Route for Admin Page
+@app.route('/admin')
+def admin():
+    return render_template('admin.html')
 
 # Route for User - Mastery Chain Link List
 @app.route('/mclinks', methods=['GET'])
