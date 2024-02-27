@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.security import generate_password_hash
 from helpers import connect_to_database
 from users import select_all_users, get_user_data, login_check_existing_user, register_check_existing_user
-from selections import check_selection_toggle, select_selections, select_delivery
+from selections import check_selection_toggle, select_selections, select_delivery, select_history
 from mclinks import select_links
 import sqlite3
 import re
@@ -487,11 +487,6 @@ def index():
 def ma():
     return render_template('ma.html')
 
-# Route for Admin Page
-@app.route('/admin')
-def admin():
-    return render_template('admin.html')
-
 # Route for User - Mastery Chain Link List
 @app.route('/mclinks', methods=['GET'])
 def mclinks():
@@ -645,15 +640,36 @@ def mclinks_delivery():
         total_price = cursor.fetchone()[0]
         totals[user_id] = total_price
 
-    # Get unique links in database
-    cursor.execute("SELECT DISTINCT name FROM mclinks;")
-    unique_links = cursor.fetchall()
-
     conn.commit()
     conn.close()
 
     return render_template('mclinks_delivery.html', delivery_data=delivery_data,
-                           unique_names=unique_names, totals=totals, unique_links=unique_links)
+                           unique_names=unique_names, totals=totals)
+
+@app.route('/a_history')
+def a_history():
+    history_data = select_history()
+
+    conn, cursor = connect_to_database('uonew.db')
+
+    # Get unique names in database
+    cursor.execute(
+        "SELECT DISTINCT history.user_id, users.id, users.display_name FROM history INNER JOIN users ON history.user_id = users.id;")
+    unique_names = cursor.fetchall()
+
+    # Fetch total sum of links for each user
+    totals = {}
+    for names in unique_names:
+        user_id = names['id']
+        cursor.execute("SELECT SUM(links_total) FROM link_delivery WHERE user_id=?", (user_id,))
+        total_price = cursor.fetchone()[0]
+        totals[user_id] = total_price
+
+    conn.commit()
+    conn.close()
+
+    return render_template('a_history.html', history_data=history_data,
+                           unique_names=unique_names, totals=totals)
 
 # Route for Admin - User Management
 @app.route('/a_users')
@@ -727,21 +743,26 @@ def user_update_pass():
 @app.route('/assign_links')
 def assign_links():
     selection_data = select_selections()
+    if selection_data:
+        conn, cursor = connect_to_database('uonew.db')
 
-    conn, cursor = connect_to_database('uonew.db')
+        for row in selection_data:
+            mclink_id = row['mclink_id']
+            s_quantity = row['s_quantity']
+            user_id = row['user_id']
+            links_total = row['links_total']
 
-    for row in selection_data:
-        mclink_id = row['mclink_id']
-        s_quantity = row['s_quantity']
-        user_id = row['user_id']
-        links_total = row['links_total']
-
-        cursor.execute("INSERT INTO link_delivery (mclink_id, s_quantity, user_id, links_total) VALUES (?, ?, ?, ?)", (mclink_id, s_quantity, user_id, links_total))
-        conn.commit()
-
-    conn.close()
-    flash('Links Delivered', 'success')
-    return redirect(url_for('a_selections'))
+            cursor.execute("INSERT INTO link_delivery (mclink_id, s_quantity, user_id, links_total) VALUES (?, ?, ?, ?)", (mclink_id, s_quantity, user_id, links_total))
+            conn.commit()
+            # When randomization works and route is ready: DELETE all entries in selections
+            # cursor.execute("DELETE FROM selections")
+            # conn.commit()
+        conn.close()
+        flash('Links Delivered', 'success')
+        return redirect(url_for('a_selections'))
+    else:
+        flash('No Selections available', 'error')
+        return redirect(url_for('a_selections'))
 
 # Reset link selections for ALL users
 @app.route('/reset_delivery')
@@ -750,7 +771,7 @@ def reset_delivery():
     cursor.execute("DELETE FROM link_delivery")
     conn.commit()
     conn.close()
-    flash('Assignment has been reset')
+    flash('All Assignment has been reset')
     return redirect(url_for('a_selections'))
 
 

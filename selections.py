@@ -32,3 +32,13 @@ def select_delivery(user_id=None):
     delivery_data = cursor.fetchall()
     conn.close()
     return delivery_data
+
+def select_history(user_id=None):
+    conn, cursor = connect_to_database('uonew.db')
+    if user_id:
+        cursor.execute("SELECT * FROM history INNER JOIN mclinks ON history.mclink_id = mclinks.id WHERE history.user_id = ?", (user_id,))
+    else:
+        cursor.execute("SELECT * FROM history INNER JOIN mclinks ON history.mclink_id = mclinks.id")
+    history_data = cursor.fetchall()
+    conn.close()
+    return history_data

@@ -1,6 +1,6 @@
 {% extends "index.html" %}
 
-{% block title %}Admin{% endblock %}
+{% block title %}Admin - MC Links{% endblock %}
 
 {% block nav %}
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
@@ -28,16 +28,16 @@
             Admin
           </a>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="admin">Admin Panel</a></li>
+            <li><a class="dropdown-item" href="a_users">User Management</a></li>
             <li><hr class="dropdown-divider"></li>
 {% endif %}
 {% if 'id' in session and g.is_admin in [2, 3] %}
-            <li><a class="dropdown-item" href="a_users">User Management</a></li>
+            <li><a class="dropdown-item" href="a_mclinks">Link Management</a></li>
             <li><a class="dropdown-item" href="a_selections">Link Selections</a></li>
 {% endif %}
 {% if 'id' in session and g.is_admin in [1, 2, 3] %}
-            <li><a class="dropdown-item" href="a_mclinks">Link Management</a></li>
             <li><a class="dropdown-item" href="mclinks_delivery">Link Delivery</a></li>
+            <li><a class="dropdown-item" href="a_history">Delivery History</a></li>
           </ul>
         </li>
 {% endif %}
@@ -53,6 +53,9 @@
         {% endif %}
         <li class="nav-item">
             <a class="nav-link" href="register">Register</a>
+        </li>
+                  <li class="nav-item">
+            <a class="nav-link" href="login">Login</a>
         </li>
       </ul>
     </div>
@@ -79,5 +82,42 @@
 {% endblock %}
 
 {% block content %}
-   <h1>Admin Page</h1>
+<div class="a_mclinks_table">
+    <h1>Delivered Links</h1>
+    <hr>
+    {% for user_info in unique_names %}
+        <h2>User: {{ user_info['display_name'] }}             <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure?')">Deliver</button></h2>
+
+        <table class="table table-striped-columns table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Date/Time</th>
+                    <th>Name</th>
+                    <th>Quality</th>
+                    <th>Quantity</th>
+                    <th>Guild Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set total_cost = totals[user_info['id']] %}
+                {% for selection in delivery_data %}
+                    {% if selection['user_id'] == user_info['id'] %}
+                        <tr>
+                            <form action="/admin_update_user_selection" method="post" style="display:inline;">
+                            <td>{{ selection['id'] }}</td>
+                            <td>{{ selection['datetime'] }}</td>
+                            <td>{{ selection['name'] }}</td>
+                            <td>{{ selection['quality'] }}"</td>
+                            <td>{{ selection['s_quantity'] }}</td>
+                            <td>{{ selection['guild_price'] }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        <p><input type="hidden" name="total"><b>Total Cost:</b> {{ total_cost }}</p>
+        <p><input type="hidden" name="admin"><b>Delivered by:</b> {{ admin_name }}</p>
+    {% endfor %}
+</div>
 {% endblock %}

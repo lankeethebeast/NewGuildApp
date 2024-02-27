@@ -18,6 +18,10 @@
     float: right;
 }
 
+.homepage {
+    text-align: center;
+    width: 100%;
+}
 
 .flash-message {
     margin: auto;
