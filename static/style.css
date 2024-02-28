@@ -17,6 +17,9 @@
 .right-align {
     float: right;
 }
+.spacer {
+    height: 100px;
+}
 
 .homepage {
     text-align: center;
@@ -57,6 +60,10 @@
     text-align: center;
 }
 
+.mclinks_head {
+    position: sticky;
+    top: 79px;
+}
 
 
 .user_table {

@@ -3,7 +3,7 @@
 {% block title %}Admin - MC Links{% endblock %}
 
 {% block nav %}
-<nav class="navbar navbar-expand-lg bg-body-tertiary">
+<nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top">
   <div class="container-fluid">
     <img src="{{ url_for('static', filename='images/uo.png') }}" alt="UO Icon" class="small-image">
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,27 +82,30 @@
 {% endblock %}
 
 {% block content %}
+<div class="spacer"></div>
 <div class="a_mclinks_table">
     <form action="/global_selection_toggle" method="post">
-        <button type="submit" onclick="return confirm('Are you sure?')">Toggle Mastery Link Selections</button>
+        <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure?')">Toggle Mastery Link Selections</button>
         <b>{{ s_toggle }}</b>
     </form>
 </div>
 <br>
 <div class="a_mclinks_table">
     <form action="/reset_all_selections" method="post">
-        <button type="submit" onclick="return confirm('Are you sure?')">Reset All Users Selections</button>
+        <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure?')">Reset All Users Selections</button>
     </form>
 </div>
 <br>
 <div class="a_mclinks_table">
     <form action="/assign_links" method="get">
-        <button type="submit" onclick="return confirm('Are you sure?')">Assign Links</button>
+        <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure?')">Assign Links</button>
     </form>
 </div>
+</div>
+<br>
 <div class="a_mclinks_table">
     <form action="/reset_delivery" method="get">
-        <button type="submit" onclick="return confirm('Are you sure?')">Reset Assigned Links</button>
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Reset Assigned Links</button>
     </form>
 </div>
 <br>
