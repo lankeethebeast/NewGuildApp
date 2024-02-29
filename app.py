@@ -6,6 +6,8 @@ from selections import check_selection_toggle, select_selections, select_deliver
 from mclinks import select_links
 import sqlite3
 import re
+import pandas as pd
+import os
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 app.secret_key = '*()123poiQWE'
@@ -586,10 +588,10 @@ def add_selection():
 def a_selections():
     if g.selection_toggle == 1:
         # If selection feature is enabled
-        s_toggle = 'ON'
+        s_toggle = 'Selections: ENABLED!'
     else:
         # If selection feature is not enabled
-        s_toggle = 'OFF'
+        s_toggle = 'Selections: DISABLED!'
 
     selection_data = select_selections()
 
@@ -746,6 +748,19 @@ def assign_links():
     if selection_data:
         conn, cursor = connect_to_database('uonew.db')
 
+# take unique usernames in selection table and randomize order to create an array
+
+# iterate through array checking selection (in order) for availability from mclinks table
+        # if available, set that user with that link for delivery table, and minus from mclink table
+        # if not available, check next selection and repeat last step
+
+        # do this until all user selections are empty
+
+
+
+
+
+
         for row in selection_data:
             mclink_id = row['mclink_id']
             s_quantity = row['s_quantity']
@@ -774,6 +789,15 @@ def reset_delivery():
     flash('All Assignment has been reset')
     return redirect(url_for('a_selections'))
 
+@app.route('/csv')
+def csv_import():
+    data = pd.read_csv('links.csv')
+
+    # Convert DataFrame to HTML table
+    table_html = data.to_html()
+
+    # Pass the HTML table to the template
+    return render_template('csv.html', table=table_html)
 
 
 
